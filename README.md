@@ -21,7 +21,7 @@ Feedback and reports from other systems are welcome!
 Usage is quite simple. There is one main function to start a SLURM cluster:
 
 ```python
-from draco.cluster import start_slurm_cluster
+from draco import start_slurm_cluster
 
 dask_client, cluster = start_slurm_cluster()
 ```
