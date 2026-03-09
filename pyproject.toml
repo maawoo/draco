@@ -3,6 +3,12 @@ authors = [{name = "Marco Wolsza", email = "marco.wolsza@uni-jena.de"}]
 name = "draco"
 requires-python = ">= 3.11"
 version = "0.1.0"
+description = "A Dask SLURMCluster wrapper for HPC systems"
+readme = "README.md"
+license = {text = "MIT"} 
+dependencies = [
+    "dask-jobqueue>=0.9.0,<0.10",
+]
 
 [build-system]
 build-backend = "hatchling.build"
