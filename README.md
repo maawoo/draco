@@ -16,6 +16,22 @@ Feedback and reports from other systems are welcome!
 - **Log management** — writes SLURM job logs to `~/.draco_logs/<timestamp>` and cleans up old log directories automatically.
 - **Graceful shutdown** — cancels all associated SLURM jobs on timeout, exception, or user interrupt.
 
+## Installation
+
+The package is not published on PyPI but you can install it directly from this repository:
+
+Using pip:
+
+```bash
+pip install 'draco @ git+https://github.com/maawoo/draco.git'
+```
+
+Using [Pixi](https://pixi.sh/):
+
+```bash
+pixi add --pypi 'draco @ git+https://github.com/maawoo/draco.git'
+```
+
 ## Usage
 
 Usage is quite simple. There is one main function to start a SLURM cluster:
