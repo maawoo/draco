@@ -150,8 +150,11 @@ def start_slurm_cluster(processes: int = 20,
                         if reservation:
                             reservation = None
                         config_index += 1
-                        dask_client.close()
-                        cluster.close()
+                        try:
+                            dask_client.close(timeout=30)
+                            cluster.close()
+                        except Exception:
+                            _cancel_slurm_jobs(job_name)
                         start_time = time.time()  # Reset the timer
                         break
                     else:
