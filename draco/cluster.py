@@ -154,7 +154,7 @@ def start_slurm_cluster(processes: int = 20,
                             dask_client.close(timeout=30)
                             cluster.close()
                         except Exception:
-                            _cancel_slurm_jobs(job_name)
+                            cancel_slurm_jobs(job_name)
                         start_time = time.time()  # Reset the timer
                         break
                     else:
@@ -173,10 +173,10 @@ def start_slurm_cluster(processes: int = 20,
                            "the timeout period. This could be due to high demand on the "
                            "cluster.")
     except (SystemExit, KeyboardInterrupt):
-        _cancel_slurm_jobs(job_name)
+        cancel_slurm_jobs(job_name)
         raise
     except Exception as e:
-        _cancel_slurm_jobs(job_name)
+        cancel_slurm_jobs(job_name)
         raise e
 
 
@@ -390,7 +390,7 @@ def _get_slurm_job_info(job_id: str) -> dict:
         return {}
 
 
-def _cancel_slurm_jobs(job_name: str):
+def cancel_slurm_jobs(job_name: str):
     """Cancel all SLURM jobs for the current user with the given job name."""
     try:
         user = os.getenv("USER")
