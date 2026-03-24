@@ -80,6 +80,7 @@ def start_slurm_cluster(processes: int = 20,
     log_dir_base.mkdir(exist_ok=True)
     _clean_old_logs(log_dir_base, now, weeks_to_keep=2)
     log_directory = log_dir_base.joinpath(now.strftime('%Y-%m-%dT%H:%M'))
+    log_directory.mkdir(parents=True, exist_ok=True)
 
     # Validate walltime and calculate worker lifetime
     walltime = _validate_walltime(walltime, min_minutes=45)
