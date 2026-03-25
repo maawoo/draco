@@ -39,7 +39,16 @@ Usage is quite simple. There is one main function to start a SLURM cluster:
 ```python
 from draco import start_slurm_cluster
 
-dask_client, cluster = start_slurm_cluster()
+client, cluster = start_slurm_cluster()
+```
+
+It is highly recommended to gracefully close the client and cluster when you are done 
+and / or want to restart your Jupyter notebook kernel. This will make sure that all 
+resources are released properly.
+
+```python
+client.close()
+cluster.close()
 ```
 
 ### Options
