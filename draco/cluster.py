@@ -364,7 +364,8 @@ def _is_cluster_ready(client: Client,
             if n_workers >= min_workers:
                 return True
             else:
-                _maybe_print(f"Cluster has {n_workers} workers, but {min_workers} required")
+                _maybe_print(f"Job is running, waiting for {min_workers} worker(s) to connect "
+                             f"({n_workers} connected so far)...")
                 return False
         
         if pending_jobs:
