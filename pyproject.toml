@@ -2,7 +2,7 @@
 authors = [{name = "Marco Wolsza", email = "marco.wolsza@uni-jena.de"}]
 name = "draco"
 requires-python = ">= 3.11"
-version = "0.1.1"
+version = "0.1.2"
 description = "A Dask SLURMCluster wrapper for HPC systems"
 readme = "README.md"
 license = {text = "MIT"} 
