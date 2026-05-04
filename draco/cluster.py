@@ -305,7 +305,7 @@ def _is_cluster_ready(client: Client,
             raise RuntimeError("Cannot determine user name from environment variable 'USER'")
         
         # Get all Slurm job IDs for current user with the given job name
-        cmd = ["squeue", "-u", user, "-n", job_name, "-h", "-o", "%i %S"]
+        cmd = ["squeue", "-u", user, "-n", job_name, "-h", "-o", "%.18i %.20S"]
         output = sp.check_output(cmd, text=True, stderr=sp.DEVNULL).strip().splitlines()
         
         # Filter jobs that are N/A or started recently
@@ -325,7 +325,7 @@ def _is_cluster_ready(client: Client,
                 try:
                     start_dt = datetime.datetime.strptime(start_time,
                                                           '%Y-%m-%dT%H:%M:%S')
-                    if (current_time - start_dt).total_seconds() <= recent_job_time:
+                    if (current_time - start_dt).total_seconds() <= recent_job_time or start_dt > current_time:
                         recent_job_ids.append(job_id)
                 except ValueError:
                     continue
