@@ -297,11 +297,21 @@ def _create_cluster(adaptive_scale_factor: int, **kwargs) -> tuple[Client, SLURM
 
 
 def _is_cluster_ready(client: Client,
-                     min_workers: int = 1,
-                     recent_job_time: int = 120,
-                     job_name: str = "dask-worker"
-                     ) -> bool:
+                      min_workers: int = 1,
+                      recent_job_time: int = 120,
+                      job_name: str = "dask-worker",
+                      print_interval: int = 30,
+                      _print_state: dict = {'last_print': 0, 'last_msg': None}
+                      ) -> bool:
     """Check the status of recent SLURM jobs for dask workers"""
+    def _maybe_print(msg):
+        """Print a message if it's different from the last one or if enough time has passed."""
+        now = time.time()
+        if msg != _print_state['last_msg'] or now - _print_state['last_print'] >= print_interval:
+            print(msg)
+            _print_state['last_print'] = now
+            _print_state['last_msg'] = msg
+
     try:
         current_time = datetime.datetime.now()
         user = os.getenv("USER")
@@ -335,7 +345,7 @@ def _is_cluster_ready(client: Client,
                     continue
         
         if not recent_job_ids:
-            print(f"No recent SLURM jobs found for {job_name}")
+            _maybe_print(f"No recent SLURM jobs found for {job_name}")
             return False
         
         running_jobs = []
@@ -358,17 +368,18 @@ def _is_cluster_ready(client: Client,
             if n_workers >= min_workers:
                 return True
             else:
-                print(f"Cluster has {n_workers} workers, but {min_workers} required")
+                _maybe_print(f"Job is running, waiting for {min_workers} worker(s) to connect "
+                             f"({n_workers} connected so far)...")
                 return False
         
         if pending_jobs:
-            print(f"All jobs are pending. Job IDs: {', '.join(pending_jobs)}")
+            _maybe_print(f"All jobs are pending. Job IDs: {', '.join(pending_jobs)}")
             return False
         
         return False
     
     except Exception as e:
-        print(f"Error checking cluster status: {e}")
+        _maybe_print(f"Error checking cluster status: {e}")
         return False
 
 
