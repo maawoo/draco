@@ -164,6 +164,12 @@ def start_slurm_cluster(processes: int = 20,
                 time.sleep(10)
             else:
                 # If we exited the while loop without breaking (i.e., cluster is ready)
+                cluster.adapt(
+                    minimum=1, 
+                    maximum=adaptive_scale_factor * config['processes'],
+                    # https://github.com/dask/dask-jobqueue/issues/498#issuecomment-1233716189
+                    worker_key=lambda state: state.address.split(':')[0], interval='10s'
+                )
                 print(f"[INFO] Cluster is ready for computation! :) Dask dashboard "
                       f"available via 'localhost:{port}'")
                 return dask_client, cluster
@@ -286,9 +292,7 @@ def _create_cluster(adaptive_scale_factor: int, **kwargs) -> tuple[Client, SLURM
     """Create a dask_jobqueue.SLURMCluster and a distributed.Client."""
     cluster = SLURMCluster(**kwargs)
     dask_client = Client(cluster)
-    cluster.adapt(minimum=1, maximum=adaptive_scale_factor * kwargs['processes'],
-                  # https://github.com/dask/dask-jobqueue/issues/498#issuecomment-1233716189
-                  worker_key=lambda state: state.address.split(':')[0], interval='10s')
+    cluster.scale(1)
     return dask_client, cluster
 
 
