@@ -139,7 +139,8 @@ def start_slurm_cluster(processes: int = 20,
             )
             print(f"[INFO] Trying to allocate requested resources using configuration "
                   f"{config_index + 1}/{len(configurations)}:\nqueue={config['queue']}, "
-                  f"reservation={active_reservation or 'None'}")
+                  f"reservation={active_reservation or 'None'}, processes={config['processes']}, "
+                  f"cores={config['cores']}, memory={config['memory']}, walltime={config['walltime']}")
             
             dask_client, cluster = _create_cluster(adaptive_scale_factor, **config)
 
