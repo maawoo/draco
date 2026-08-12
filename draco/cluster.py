@@ -142,7 +142,7 @@ def start_slurm_cluster(
                   f"reservation={active_reservation or 'None'}, processes={config['processes']}, "
                   f"cores={config['cores']}, memory={config['memory']}, walltime={config['walltime']}")
             
-            dask_client, cluster = _create_cluster(adaptive_scale_factor, **config)
+            dask_client, cluster = _create_cluster(**config)
 
             while not _is_cluster_ready(dask_client, job_name=job_name):
                 if time.time() - start_time > wait_timeout:
@@ -289,7 +289,7 @@ def _check_reservation_active(reservation_name: str) -> bool:
     )
 
 
-def _create_cluster(adaptive_scale_factor: int, **kwargs) -> tuple[Client, SLURMCluster]:
+def _create_cluster(**kwargs) -> tuple[Client, SLURMCluster]:
     """Create a dask_jobqueue.SLURMCluster and a distributed.Client."""
     cluster = SLURMCluster(**kwargs)
     dask_client = Client(cluster)
