@@ -1,26 +1,26 @@
+import datetime
 import os
 import shutil
-from pathlib import Path
-import datetime
-import time
 import subprocess as sp
+import time
+from pathlib import Path
+
 from dask_jobqueue import SLURMCluster
+from distributed import Client
 from distributed.utils import TimeoutError
 
-from typing import Optional
-from distributed import Client
 
-
-def start_slurm_cluster(processes: int = 20,
-                        cores: int = 40,
-                        memory: str = '80 GiB',
-                        walltime: str = '01:30:00',
-                        wait_timeout: int = 300,
-                        adaptive_scale_factor: int = 2,
-                        use_scratch_dir: bool = True,
-                        reservation: Optional[str] = None,
-                        queues_to_try: Optional[list[str]] = None
-                        ) -> tuple[Client, SLURMCluster]:
+def start_slurm_cluster(
+    processes: int = 20,
+    cores: int = 40,
+    memory: str = '80 GiB',
+    walltime: str = '01:30:00',
+    wait_timeout: int = 300,
+    adaptive_scale_factor: int = 2,
+    use_scratch_dir: bool = True,
+    reservation: str | None = None,
+    queues_to_try: list[str] | None = None
+) -> tuple[Client, SLURMCluster]:
     """
     Start a Dask cluster on a SLURM-managed HPC cluster with adaptive scaling and robust 
     job monitoring. The function will attempt to start the cluster using multiple 
@@ -73,7 +73,7 @@ def start_slurm_cluster(processes: int = 20,
     if any(x is None for x in [user, home_directory]):
         raise RuntimeError("Cannot determine user name or home directory")
     home_directory = Path(home_directory)
-    now = datetime.datetime.now()
+    now = datetime.datetime.now()  # noqa: DTZ005
 
     # Set up log directory and clean logs older than 2 weeks
     log_dir_base = home_directory.joinpath('.draco_logs')
@@ -154,7 +154,7 @@ def start_slurm_cluster(processes: int = 20,
                         try:
                             dask_client.close(timeout=30)
                             cluster.close()
-                        except Exception:
+                        except Exception:  # noqa: BLE001
                             cancel_slurm_jobs(job_name)
                         start_time = time.time()  # Reset the timer
                         break
@@ -182,9 +182,9 @@ def start_slurm_cluster(processes: int = 20,
     except (SystemExit, KeyboardInterrupt):
         cancel_slurm_jobs(job_name)
         raise
-    except Exception as e:
+    except Exception:
         cancel_slurm_jobs(job_name)
-        raise e
+        raise
 
 
 def _clean_old_logs(log_directory, now, weeks_to_keep: int = 2):
@@ -196,12 +196,12 @@ def _clean_old_logs(log_directory, now, weeks_to_keep: int = 2):
     for dir_path in log_path.iterdir():
         if dir_path.is_dir():
             try:
-                dir_date = datetime.datetime.strptime(dir_path.name, "%Y-%m-%dT%H:%M")
+                dir_date = datetime.datetime.strptime(dir_path.name, "%Y-%m-%dT%H:%M")  # noqa: DTZ007
                 if dir_date < cutoff_date:
                     shutil.rmtree(dir_path)
             except ValueError:
                 print(f"Skipping {dir_path}: name does not match expected date format.")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 print(f"Error processing {dir_path}: {e}")
 
 
@@ -253,7 +253,7 @@ def _dashboard_port(port: int = 8787) -> int:
     return port
 
 
-def _check_infiniband() -> Optional[str]:
+def _check_infiniband() -> str | None:
     try:
         # Check if InfiniBand interfaces are present
         output = sp.check_output(
@@ -267,7 +267,7 @@ def _check_infiniband() -> Optional[str]:
                          p.name.startswith("ib")]
         return ib_interfaces[0] if ib_interfaces else None
 
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -280,7 +280,7 @@ def _check_reservation_active(reservation_name: str) -> bool:
             ["scontrol", "show", "reservation", reservation_name],
             text=True,
         ).strip()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
     return (
@@ -297,14 +297,17 @@ def _create_cluster(adaptive_scale_factor: int, **kwargs) -> tuple[Client, SLURM
     return dask_client, cluster
 
 
-def _is_cluster_ready(client: Client,
-                      min_workers: int = 1,
-                      recent_job_time: int = 120,
-                      job_name: str = "dask-worker",
-                      print_interval: int = 30,
-                      _print_state: dict = {'last_print': 0, 'last_msg': None}
-                      ) -> bool:
+def _is_cluster_ready(
+    client: Client,
+    min_workers: int = 1,
+    recent_job_time: int = 120,
+    job_name: str = "dask-worker",
+    print_interval: int = 30,
+    _print_state: dict | None = None
+) -> bool:
     """Check the status of recent SLURM jobs for dask workers"""
+    if _print_state is None:
+        _print_state = {'last_print': 0, 'last_msg': None}
     def _maybe_print(msg):
         """Print a message if it's different from the last one or if enough time has passed."""
         now = time.time()
@@ -314,7 +317,7 @@ def _is_cluster_ready(client: Client,
             _print_state['last_msg'] = msg
 
     try:
-        current_time = datetime.datetime.now()
+        current_time = datetime.datetime.now()  # noqa: DTZ005
         user = os.getenv("USER")
         if not user:
             raise RuntimeError("Cannot determine user name from environment variable 'USER'")
@@ -338,8 +341,10 @@ def _is_cluster_ready(client: Client,
                 recent_job_ids.append(job_id)
             else:
                 try:
-                    start_dt = datetime.datetime.strptime(start_time,
-                                                          '%Y-%m-%dT%H:%M:%S')
+                    start_dt = datetime.datetime.strptime(  # noqa: DTZ007
+                        start_time,
+                        '%Y-%m-%dT%H:%M:%S'
+                    )
                     if (current_time - start_dt).total_seconds() <= recent_job_time or start_dt > current_time:
                         recent_job_ids.append(job_id)
                 except ValueError:
@@ -379,7 +384,7 @@ def _is_cluster_ready(client: Client,
         
         return False
     
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         _maybe_print(f"Error checking cluster status: {e}")
         return False
 
@@ -423,5 +428,5 @@ def cancel_slurm_jobs(job_name: str):
                 print(f"Timeout while trying to cancel job {job_id}")
             except sp.SubprocessError as e:
                 print(f"Failed to cancel job {job_id}: {e}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Error canceling jobs: {e}")
